@@ -104,7 +104,7 @@ func nextPassword(n int, c string) func() string {
 
 // Dictionary Attack
 func dictionaryAttack() {
-	lines, err := readLines("dictionary.txt")
+	lines, err := readLines("dictionary_100000.txt")
 	if err != nil {
 		log.Fatalf("readLines: %s", err)
 	}
