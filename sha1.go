@@ -1,14 +1,17 @@
 package main
 
 import (
+	"bufio"
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
+	"log"
+	"os"
 	"strings"
 	"time"
 )
 
-var hashes = make(map[string]string)
+var hashes = make(map[string]string, 8)
 
 var start = time.Now().UTC()
 
@@ -28,10 +31,14 @@ func main() {
 	start = time.Now().UTC()
 
 	// Trying passwords with 4 to 10 characters
-	for i := 4; i < 10; i++ {
+	for i := 4; i < 11; i++ {
 		go bruteForce(i, set)
 	}
-	bruteForce(10, set)
+	go dictionaryAttack()
+
+	// Prevent exit
+	fmt.Scanln()
+	fmt.Println("done")
 }
 
 // Return hashed input: sha1(sha1(input))
@@ -70,6 +77,7 @@ func bruteForce(length int, set string) {
 }
 
 // This function return a function
+// To generate all possible passwords from given set
 func nextPassword(n int, c string) func() string {
 	r := []rune(c)
 	p := make([]rune, n)
@@ -92,4 +100,34 @@ func nextPassword(n int, c string) func() string {
 		}
 		return string(p)
 	}
+}
+
+// Dictionary Attack
+func dictionaryAttack() {
+	lines, err := readLines("dictionary.txt")
+	if err != nil {
+		log.Fatalf("readLines: %s", err)
+	}
+	for _, word := range lines {
+		if hasHash(hash(word)) {
+			fmt.Println(word, hash(word), time.Since(start))
+		}
+	}
+}
+
+// Reads a whole file into memory
+// Returns a slice of its lines.
+func readLines(path string) ([]string, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	var lines []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+	return lines, scanner.Err()
 }
